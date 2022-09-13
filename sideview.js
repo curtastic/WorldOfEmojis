@@ -33,6 +33,7 @@ var w = this,
 	gTapDiv,
 	gSelDiv,
 	gMonDragging,
+	gMonDraggedId,
 	gTapHitDiv,
 	s,
 	s2,
@@ -51,31 +52,23 @@ var w = this,
 	gSpeakOnClose,
 	gTalkObj,
 	gMonKinds = [
-		{emoji: '🐡', offsetY: 1, name: 'Pufferfish', types: ['poison','water'], pow: '7☠', hp: 50},
-		{emoji: '🦣', name: 'Mammoth', types: ['beast','ice'], pow: '11❄', hp: 80, reload: 1.4, repel: .8},
-		{emoji: '🐓', name: 'Rooster', types: ['bird','ground'], pow: 6, hp: 40, reload: .5, repel: 1.2},
-		{emoji: '🐇', name: 'Rabbit', types: ['ground'], pow: 4, hp: 30, reload: .5},
-		{emoji: '🐿', name: 'Squirrel', types: ['ground'], pow: 5, hp: 20},
-		{emoji: '🦗', name: 'Cricket', types: ['bug'], pow: 2, hp: 15},
-		{emoji: '🐀', name: 'Rat', types: ['poison','ground'], pow: '2☠', hp: 4},
+		{emoji: '🐡', offsetY: 1, name: 'Pufferfish', t: ['poison','water'], pow: '7☠', hp: 50},
+		{emoji: '🦣', name: 'Mammoth', t: ['beast','ice'], pow: '11❄', hp: 80, reload: 1.4, repel: .8},
+		{emoji: '🐓', name: 'Rooster', t: ['bird','ground'], pow: 6, hp: 40, reload: .5, repel: 1.2},
+		{emoji: '🐇', name: 'Rabbit', pow: 4, hp: 30, reload: .5},
+		{emoji: '🐿', name: 'Squirrel', pow: 5, hp: 20},
+		{emoji: '🦗', name: 'Cricket', pow: 2, hp: 15},
+		{emoji: '🐀', name: 'Rat', pow: '2☠', hp: 4},
 		
-		{emoji: '🐌', name: 'Snail', types: ['ground','bug'], pow: 2, hp: 70, reload: 1.5},
-		{emoji: '🦨', name: 'Skunk', types: ['poison','ground'], pow: '4☠', hp: 50, repel: .6},
-		{emoji: '🦂', name: 'Scorpion', types: ['poison','fire'], pow: '7☠', hp: 40, reload: 1.2},
-		{emoji: '🦛', name: 'Hippo', types: ['water','ground'], pow: 15, hp: 70},
-		{emoji: '🦘', name: 'Kangaroo', types: ['beast'], pow: 8, hp: 40, reload: .7},
-		{emoji: '🐏', name: 'Ram', types: ['beast','metal'], pow: 15, hp: 70, reload: 1.7},
-		{emoji: '🦭', name: 'Seal', types: ['water','ice'], pow: '5❄', hp: 50},
-		{emoji: '🦆', name: 'Duck', types: ['water','bird'], pow: 5, hp: 20},
-		{emoji: '🐊', name: 'Crocodile', types: ['water'], pow: 15, hp: 60},
-		{emoji: '🐍', name: 'Snake', types: ['poison'], pow: 11, hp: 40},
-		{emoji: '🐢', name: 'Turtle', types: ['water'], pow: 5, hp: 60},
+		{emoji: '🐌', name: 'Snail', pow: 2, hp: 70, reload: 1.5},
+		{emoji: '🦨', name: 'Skunk', pow: '4☠', hp: 50, repel: .6},
+		{emoji: '🦆', name: 'Duck', pow: 5, hp: 20},
 		
-		{emoji: '🦖', name: 'T-Rex', types: ['reptile'], pow: 30, hp: 200, repel: .5},
-		{emoji: '🐉', name: 'Dragon', types: ['fire'], pow: 25, hp: 230},
-		this.gMonKindCure = {emoji: '❤', name: 'Heart', types: ['item'], pow: 1, hp: 10, flip: 1},
-		{emoji: '🩹', name: 'Bandage', types: ['item'], pow: 2, hp: 7},
-		gMonKindPackage = {emoji: '📦', name: 'Package', types: ['item'], pow: 1, hp: 10},
+		{emoji: '🦖', name: 'T-Rex', pow: 30, hp: 200, repel: .5},
+		{emoji: '🐉', name: 'Dragon', pow: 25, hp: 230},
+		this.gMonKindCure = {emoji: '❤', name: 'Heart', pow: 1, hp: 10, flip: 1},
+		{emoji: '🩹', name: 'Bandage', pow: 2, hp: 7},
+		gMonKindPackage = {emoji: '📦', name: 'Package', pow: 1, hp: 10},
 	],
 gObjDelete = obj => {
 	obj.div.remove()
@@ -139,7 +132,7 @@ gMonHpBarMake = mon => {
 },
 gMonHitSoundPlay = mon => {
 	var pitch = 30-mon.reloadMax/5
-	gSoundEffectPlay(mon.hS ||= gSoundEffectMake([pitch, pitch, mon.monKind.pow/100, .02, .02]))
+	gSoundEffectPlay(mon.hS ||= gSoundEffectMake([pitch, pitch, mon.monKind.pow/100, 2, 2]))
 },
 gMonDamageGet = mon => mon.monKind.pow*(gRandom(.6)+.7)|0,
 gMonHpSet = (mon,hp) => {
@@ -287,16 +280,18 @@ gObjMoved = obj => {
 	var x=obj.x, y=obj.y, z=obj.z
 	var y2 = y + obj.offsetY*4
 	var s = obj.div.style
-	var s2 = obj.shadowDiv?.style, st
+	var s2 = obj.shadowDiv?.style, st, t=_=>`translate3d(calc(var(--youX) + ${x}rem - var(--cameraX)),calc(${_}rem - 100%),${z}rem)`,
+	u=_=>`translate3d(calc(var(--youX) - var(--cameraX) - 3.5rem),calc(${_}rem - 100%),${z}rem)`
+	
 	if(z > 1){
 		y += gGroundY
 		y2 += gGroundY
 		if(obj.kind == 1) {
-			s.transform = `translate3d(calc(var(--youX) - var(--cameraX) - 3.5rem),calc(${y2}rem - 100%),${z}rem)`
-			st = `translate3d(calc(var(--youX) - var(--cameraX) - 3.5rem),calc(${y}rem - 100%),${z}rem)`
+			s.transform = u(y2)
+			st          = u(y)
 		} else if(obj.kind == 4) {
-			s.transform = `translate3d(calc(var(--youX) + ${x}rem - var(--cameraX)),calc(${y2}rem - 100%),${z}rem)`
-			st = `translate3d(calc(var(--youX) + ${x}rem - var(--cameraX)),calc(${y}rem - 100%),${z}rem)`
+			s.transform = t(y2)
+			st          = t(y)
 		} else {
 			s.transform = `translate3d(calc(${x}rem - var(--cameraX)),calc(${y2}rem - 100%),${z}rem)`
 			st = `translate3d(calc(${x}rem - var(--cameraX)),calc(${y}rem - 100%),${z}rem)`
@@ -322,6 +317,7 @@ gSpeakNo = _ => {
 	gSpeakOnClose && setTimeout(gSpeakOnClose,300)
 	if(gState != 1)
 		gButGo.style.display = 'none'
+	gbns.style.display = 'none'
 },
 gGuySpeak = (obj, speech, onClose) => {
 	var text = speech || obj.speech
@@ -878,7 +874,9 @@ gSelDivSet=div=>{
 gMouseUp=_=>{
 	if(gMonDragging) {
 		if(!gMouseMoved) {
-			gGuySpeak(gMonDragging, gMonDragging.monKind.name+`<br>❤${gMonDragging.hp}/${gMonDragging.hpMax} 🗡${gMonDragging.monKind.pow}<br><button onclick="gMonNameSet('${gMonDragging.monKind.id}')"><p class=nl>N</p> Rename</button>`)
+			gGuySpeak(gMonDragging, gMonDragging.monKind.name+`<br>❤${gMonDragging.hp}/${gMonDragging.hpMax} 🗡${gMonDragging.monKind.pow}`)
+			gbns.style.display = 'block'
+			gMonDraggedId = gMonDragging.monKind.id
 		}
 		gMonDragging.div.style.filter = 'unset'
 		gObjZSet(gMonDragging, gYou.z)
@@ -920,6 +918,12 @@ gMouseDown = e => {
 	}
 	if(gTapDiv == gMuteBut) {
 		gMute()
+	}
+	if(gTapDiv.id == 'gbns') {
+		gMonNameSet(gMonDraggedId)
+	}
+	if(gTapDiv == gNearBut) {
+		gNearLogin()
 	}
 	
 	if(!gAudioContexts[0]){
@@ -1059,10 +1063,9 @@ gMonNameSet = id => {
 		if(monKind.id == id)
 			break
 	}
-	var t = prompt("Enter new name (max 20 letters)")
+	var t = prompt(`Enter new name for ${monKind.name} (max 20 letters)`)
 	gSpeakNo()
 	if(t) {
-		debugger
 		monKind.name = t.substr(0,20)
 		if(gWalletConnection.getAccountId()) {
 			gNearMonNameSet(monKind, monKind.name)
@@ -1111,10 +1114,10 @@ gSoundEffectMake = notes => {
 	// Each note uses 5 slots in the passed in array.
 	for(var i=0; i<notes.length; i+=5) {
 		// Calculate how many buffer array slots will be used for fade in / fade out of this note.
-		fadeIn = bytesPerSecond * notes[i+3] | 0
+		fadeIn = bytesPerSecond * notes[i+3]/100 | 0
 		// Overlap the fades of the notes.
 		songByteI -= Math.min(fadeOut, fadeIn)
-		fadeOut = bytesPerSecond * notes[i+4] | 0
+		fadeOut = bytesPerSecond * notes[i+4]/100 | 0
 		
 		// Calculate sine wave multiplier for start/end frequency.
 		var multiplier = pi2 * notes[i]*10 / bytesPerSecond
@@ -1241,30 +1244,30 @@ onresize=_=>{
 onload=_=>{
 	gGoldSet(1)
 	gSoundDoor = gSoundEffectMake([
-		15, 16, .1, .002, .001,
-		15, 18, .1, .02, .01,
+		15, 16, .1, .2, .1,
+		15, 18, .1, 2, 1,
 	])
 	gSoundSpeak = gSoundEffectMake([18, 26, .1, .04, .04])
 	gSoundSpeakNo = gSoundEffectMake([24, 19, .05, .02, .02])
 	gSoundItemGet = gSoundEffectMake([
-		17, 17, .08, .002, .02,
-		21, 21, .08, .002, .02,
-		25, 27, .1, .002, .02,
+		17, 17, .08, .2, 2,
+		21, 21, .08, .2, 2,
+		25, 27, .1, .2, 2,
 	])
 	gSoundMonDie = gSoundEffectMake([
-		25, 24, .1, .02, .02,
-		17, 17, .1, .02, .02,
-		14, 12, .3, .03, .09,
+		25, 24, .1, 2, 2,
+		17, 17, .1, 2, 2,
+		14, 12, .3, 3, 9,
 	])
 	gSoundBattleStart = gSoundEffectMake([
-		25, 25, .1, .02, .02,
-		22, 22, .1, .02, .02,
-		35, 35, .2, .03, .09,
+		25, 25, .1, 2, 2,
+		22, 22, .1, 2, 2,
+		35, 35, .2, 3, 9,
 	])
 	gSoundGrass = gSoundEffectMake([
-		15, 17, .03, .001, .001,
-		16, 16, .03, .001, .001,
-		15, 15, .03, .001, .001,
+		15, 17, .03, .1, .1,
+		16, 16, .03, .1, .1,
+		15, 15, .03, .1, .1,
 	])
 	
 	gNearApi.nearInitPromise = gNearConnect().then(gNearStatusCheck)
@@ -1297,7 +1300,7 @@ onload=_=>{
 	w.gSceneForest = gSceneMake('#583')
 	gScene.endX = 277
 	
-	gObjMake('🧍‍♂️',16,0,53,7,0,.03,3,"The Final Forest. Some say they've seen a dragon in the moonlight.")
+	gObjMake('🧍‍♂️',16,0,53,7,0,.03,3,"The Final Forest. I once saw a dragon in the moonlight.")
 	
 	gObjMake('🔷',0,0,58,6,3,0,0,'',gSceneWorld)
 	
@@ -1333,29 +1336,29 @@ onload=_=>{
 	gScene.endX = 531
 	
 	gScene.song = [
-		6,0,9,0,
-		12,0,9,0,
-		14,0,9,0,
-		16,0,9,0,
-		14,0,9,0,
-		14,0,9,0,
-		14,0,16,0,
-		18,0,16,0,
-		14,0,12,0,
-		14,0,9,0,
-		16,0,9,0,
-		14,0,9,0,
-		18,0,9,0,
-		14,0,9,0,
-		18,19,18,0,
-		16,0,9,0,
-		14,0,9,0,
-		18,19,18,0,
-		21,0,9,0,
-		18,0,9,0,
-		16,0,9,0,
-		18,0,16,0,
-		14,0,9,
+		6,,9,,
+		12,,9,,
+		14,,9,,
+		16,,9,,
+		14,,9,,
+		14,,9,,
+		14,,16,,
+		18,,16,,
+		14,,12,,
+		14,,9,,
+		16,,9,,
+		14,,9,,
+		18,,9,,
+		14,,9,,
+		18,19,18,,
+		16,,9,,
+		14,,9,,
+		18,19,18,,
+		21,,9,,
+		18,,9,,
+		16,,9,,
+		18,,16,,
+		14,,9,
 	]
 
 	
@@ -1451,7 +1454,7 @@ onload=_=>{
 	
 	gObjMake('🌳',525,0,50,20,0,.2,0,'',gSceneForest)
 	
-	gObjMake('🪧',380,0,53,6,0,.07,0,"Green-Blue City: The Eternally Greenish Blue Paradise")
+	gObjMake('🪧',380,0,53,6,0,.07,0,"Green-Blue City: The Greenish Blue Paradise")
 	
 	gObjMake(gTilesMake(23,1),380,0,58,6,3)
 	
@@ -1494,7 +1497,7 @@ onload=_=>{
 				if(gOak.x > 888 || gYou.mons[0].monKind != gMonKindCure)
 					gGuySpeak(mon)
 				else {
-					gGuySpeak(gOak, `You want the `+mon.monKind.types.join('/')+` emoji, ${mon.monKind.name}?`)
+					gGuySpeak(gOak, `You want the `+mon.monKind.t.join('/')+` emoji, ${mon.monKind.name}?`)
 					gMenuYesNoShow(_ => {
 						gStateSet(4)
 						mon.cage.div.style.opacity = mon.cage.shadowDiv.style.opacity = 0
