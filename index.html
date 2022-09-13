@@ -4,7 +4,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, target-densityDpi=device-dpi, minimal-ui' />
 <style>
 *{user-select:none;outline:none;transform-origin:bottom;transform-style:flat}
-@font-face{font-family:emoji;src:url(Twemoji.ttf)}
+@font-face{font-family:emoji;src:url(//xem.github.io/unicode13/Twemoji.ttf)}
 #gLayer2{--shadowSkew:-20deg;--shadowOpacity:.5;--cameraX:0rem;--youX:0rem}
 .shadow,.shadowOnWall{line-height:inherit;transition:transform 1s ease,opacity 1s ease;transform:scaleY(-.15) skewX(var(--shadowSkew));left:6%;z-index:-1;bottom:0;filter:brightness(0);transform-origin:bottom;opacity:var(--shadowOpacity)}
 .shadowOnWall{transform:translate(.1rem,.4rem)}
@@ -38,10 +38,10 @@ p,div{display:block;padding:0;margin:0;transform:translate3d(0,0,0);line-height:
 .but{position:absolute;opacity:.4;z-index:222}
 .but.sel{opacity:.9}
 #gNearBut,.nl{cursor:pointer;font-family:arial;background:linear-gradient(303deg,transparent 45%,black 50%,transparent 55%);line-height:.7;transform:scaleX(1.2);display:inline-block}
-button{margin-top:1rem;cursor:pointer}
+.nl{pointer-events:none}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/near-api-js/dist/near-api-js.min.js"></script>
-<script src='sideview.js?10'></script>
+<script src='min.js'></script>
 </head>
 <body style='font-family:emoji;margin:0;overflow:hidden;height:100%;background:#9cf;transition:filter .5s ease'>
 <div id=gLayer1 style='width:100%'></div>
@@ -54,9 +54,10 @@ button{margin-top:1rem;cursor:pointer}
 <div id=gButGo class=but style='font-size:25rem;bottom:0;padding:3rem;right:0;display:none'>✅</div>
 <div id=gButNo class=but style='font-size:15rem;bottom:0;padding:3rem;right:26rem;display:none;filter:hue-rotate(245deg)'>❎</div>
 <div style='position:absolute;top:1rem;left:22%;font-size:10rem;z-index:2'>🪙<span id=gGoldDiv style='font-family:arial'></span></div>
+<button id=gbns style='display:none;cursor:pointer;position:absolute;top:1rem;left:58%;font-size:5rem;z-index:2'><p class=nl>N</p> Rename</button>
 <div id=gClock style='position:absolute;top:1rem;left:calc(50% - 5rem);font-size:10rem;z-index:2'></div>
 <div id=gMuteBut style='position:absolute;top:1rem;right:1rem;font-size:12rem;z-index:222;cursor:pointer'>🔇</div>
-<div id=gNearBut style='position:absolute;top:2rem;left:1rem;font-size:12rem;z-index:222' onclick='gNearLogin()'>N</div>
+<div id=gNearBut style='position:absolute;top:2rem;left:1rem;font-size:12rem;z-index:222'>N</div>
 <div id=gDead style='display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:44rem;z-index:999'>💀</div>
 </body>
 </html>
